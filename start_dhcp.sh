@@ -16,19 +16,19 @@ DNS_SERVERS="8.8.8.8, 8.8.4.4"
 
 # 1. Check for root privileges
 if [ "$(id -u)" != "0" ]; then
-   echo "This script must be run as root" 1>&2
-   exit 1
+    echo "This script must be run as root" 1>&2
+    exit 1
 fi
 
 echo "--- Step 1: Passed root check ---"
 
 # 2. Install isc-dhcp-server if not installed
 if ! dpkg -l | grep -q "isc-dhcp-server"; then
-    echo "isc-dhcp-server not found. Installing..."
-    apt-get update
-    apt-get install -y isc-dhcp-server
+    echo "isc-dhcp-server not found. Installing..."
+    apt-get update
+    apt-get install -y isc-dhcp-server
 else
-    echo "isc-dhcp-server is already installed."
+    echo "isc-dhcp-server is already installed."
 fi
 
 echo "--- Step 2: Completed package check/installation ---"
@@ -63,8 +63,8 @@ authoritative;
 
 # Subnet declaration
 subnet ${SUBNET} netmask ${NETMASK} {
-  range ${RANGE_START} ${RANGE_END};
-  option routers ${ROUTER_IP};
+  range ${RANGE_START} ${RANGE_END};
+  option routers ${ROUTER_IP};
 }
 EOF
 
@@ -73,11 +73,10 @@ echo "--- Step 4: Completed dhcpd.conf generation ---"
 # 5. Configure the interface for isc-dhcp-server
 echo "Configuring isc-dhcp-server to listen on ${INTERFACE}..."
 if [ -f /etc/default/isc-dhcp-server ]; then
-    sed -i 's/^INTERFACESv4=.*/INTERFACESv4="'${INTERFACE}'"/' /etc/default/isc-dhcp-server
+    # Note: Using % as delimiter for sed because INTERFACE might contain /
+    sed -i 's%^INTERFACESv4=.*%INTERFACESv4="'${INTERFACE}'"%' /etc/default/isc-dhcp-server
 else
-    echo "Warning: /etc/default/isc-dhcp-server not found. This might be an issue on newer systems."
-    # On newer Ubuntu versions (18.04+), you might need to configure /etc/netplan
-    # or systemd-networkd, but for isc-dhcp-server, the default file is standard.
+    echo "Warning: /etc/default/isc-dhcp-server not found. This might be an issue on newer systems."
 fi
 
 echo "--- Step 5: Completed interface configuration ---"
@@ -89,7 +88,7 @@ systemctl restart isc-dhcp-server
 echo "--- Step 6: Service restarted. Checking status... ---"
 systemctl status isc-dhcp-server
 
-# --- ここから追記 ---
+# --- Rust Installation ---
 
 # 7. Install Rust Execution Environment
 echo "--- Step 7: Installing Rust ---"
@@ -97,7 +96,7 @@ echo "--- Step 7: Installing Rust ---"
 # 7.1. Install dependencies (curl)
 if ! command -v curl &> /dev/null; then
     echo "curl not found. Installing..."
-    # apt-get update は Step 2 で実行済みと仮定
+    # apt-get update is already run in Step 2 if needed
     apt-get install -y curl
 else
     echo "curl is already installed."
@@ -129,5 +128,3 @@ else
 fi
 
 echo "--- Step 7: Completed Rust installation ---"
-
-# --- 追記ここまで ---
